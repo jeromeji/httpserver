@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/golang/glog"
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
+	"time"
 )
 
 func RemoteIp(req *http.Request) string {
@@ -43,7 +47,7 @@ func headers(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, "version is :%v \n", os.Getenv("version"))
 	clientIp := RemoteIp(r)
-	glog.Info(clientIp,strconv.Itoa(http.StatusOK))
+	glog.Info(clientIp, strconv.Itoa(http.StatusOK))
 
 }
 
@@ -53,13 +57,26 @@ func notfound(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func listenSignal(ctx context.Context, httpSrv *http.Server) {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	select {
+	case <-sigs:
+		timeoutCtx, _ := context.WithTimeout(ctx, 3*time.Second)
+		fmt.Println("notify sigs")
+		httpSrv.Shutdown(timeoutCtx)
+		fmt.Println("http shutdown")
+	}
+}
+
 func main() {
-    http.HandleFunc("/",notfound)
+	http.HandleFunc("/", notfound)
 	http.HandleFunc("/healthz", healthz)
 	http.HandleFunc("/headers", headers)
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		glog.Error("server is not started")
+	server := &http.Server{
+		Addr: ":8080",
 	}
-
+	go server.ListenAndServe()
+	listenSignal(context.Background(), server)
 }
