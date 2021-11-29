@@ -1,8 +1,8 @@
 export tag=v1.0
-release: build
+release:
 	echo "building httpserver container"
 	docker build -t jeromeji/httpserver:${tag} -f ./Dockerfile
 
-push: release
+push:
 	echo "pushing jeromeji/httpserver"
 	docker push jeromeji/httpserver:v1.0

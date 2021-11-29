@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"github.com/golang/glog"
 	"net"
@@ -33,7 +34,7 @@ func RemoteIp(req *http.Request) string {
 func healthz(w http.ResponseWriter, r *http.Request) {
 	_, err := fmt.Fprintf(w, strconv.Itoa(http.StatusOK))
 	if err != nil {
-		glog.Error("wrong")
+		glog.V(4).Info("wrong")
 	}
 
 }
@@ -47,7 +48,7 @@ func headers(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, "version is :%v \n", os.Getenv("version"))
 	clientIp := RemoteIp(r)
-	glog.Info(clientIp, strconv.Itoa(http.StatusOK))
+	glog.V(2).Info(clientIp, strconv.Itoa(http.StatusOK))
 
 }
 
@@ -64,13 +65,15 @@ func listenSignal(ctx context.Context, httpSrv *http.Server) {
 	select {
 	case <-sigs:
 		timeoutCtx, _ := context.WithTimeout(ctx, 3*time.Second)
-		fmt.Println("notify sigs")
+		glog.V(2).Info("notify sigs")
 		httpSrv.Shutdown(timeoutCtx)
-		fmt.Println("http shutdown")
+		glog.V(2).Info("http shutdown")
 	}
 }
 
 func main() {
+	glog.V(2).Info("....." + os.Getenv("version") + ".....")
+	flag.Parse()
 	http.HandleFunc("/", notfound)
 	http.HandleFunc("/healthz", healthz)
 	http.HandleFunc("/headers", headers)
@@ -79,4 +82,5 @@ func main() {
 	}
 	go server.ListenAndServe()
 	listenSignal(context.Background(), server)
+	defer glog.Flush()
 }
