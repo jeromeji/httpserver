@@ -1,0 +1,14 @@
+### generated key-cert
+```
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=cncamp.com/O=cncamp"
+```
+### create secret
+```
+kubectl create secret tls httpserver-secret --cert=tls.crt --key=tls.key
+```
+### install ingress controller
+```
+kubectl create -f ./ingress-deployment.yaml
+
+kubectl delete ValidatingWebhookConfiguration ingress-nginx-admission
+```
