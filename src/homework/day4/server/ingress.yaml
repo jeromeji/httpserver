@@ -1,6 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  namespace: httpserver
   name: httpserver-ingress
   annotations:
     kubernetes.io/ingress.allow-http: 'false'

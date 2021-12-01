@@ -1,14 +1,25 @@
 ### generated key-cert
 ```
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=cncamp.com/O=cncamp"
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=cncamp.com/O=cncamp" -addext "subjectAltName = DNS:cncamp.com"
 ```
 ### create secret
 ```
-kubectl create secret tls httpserver-secret --cert=tls.crt --key=tls.key
+kubectl create secret tls httpserver-secret --cert=tls.crt --key=tls.key -n httpserver
 ```
 ### install ingress controller
 ```
 kubectl create -f ./ingress-deployment.yaml
 
 kubectl delete ValidatingWebhookConfiguration ingress-nginx-admission
+```
+
+### check ingress status
+```
+kubectl describe ingress -A
+```
+###find your nodeport  & curl your server
+```
+kubectl get svc -n ingress-nginx|grep ingress-nginx-controller
+
+curl  -H "Host: cncamp.com" https://192.169.0.202:30132 -v -k
 ```
