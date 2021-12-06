@@ -29,7 +29,7 @@ spec:
                 command: ['/bin/sh', '-c', 'echo env is ok']
             preStop:
               exec:
-                command: [ "/bin/sh","-c","ps aux|grep 6924396|grep -v grep|awk -F ' ' '{print $2}'|xargs kill -12" ]
+                command: [ "/bin/sh","-c","ps aux|grep server|grep -v grep|awk -F ' ' '{print $2}'|xargs kill -12" ]
           livenessProbe:
             tcpSocket:
               port: 8080
