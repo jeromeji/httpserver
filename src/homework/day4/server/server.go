@@ -43,7 +43,7 @@ func RemoteIp(req *http.Request) string {
 func healthz(w http.ResponseWriter, r *http.Request) {
 	_, err := fmt.Fprintf(w, strconv.Itoa(http.StatusOK))
 	if err != nil {
-		glog.V(4).Info("wrong")
+		glog.V(2).Info("wrong")
 	}
 
 }
@@ -68,7 +68,7 @@ func headers(w http.ResponseWriter, r *http.Request) {
 //}
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	glog.V(4).Info("entering root handler")
+	glog.V(2).Info("entering root handler")
 	timer := metrics.NewTimer()
 	defer timer.ObserveTotal()
 	user := r.URL.Query().Get("user")
@@ -83,7 +83,9 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	for k, v := range r.Header {
 		io.WriteString(w, fmt.Sprintf("%s=%s\n", k, v))
 	}
-	glog.V(4).Infof("Respond in %d ms", delay)
+	glog.V(2).Infof("Respond in %d ms", delay)
+	clientIp := RemoteIp(r)
+	glog.V(2).Info(clientIp, strconv.Itoa(http.StatusOK), delay)
 }
 
 func listenSignal(ctx context.Context, httpSrv *http.Server) {
@@ -100,9 +102,10 @@ func listenSignal(ctx context.Context, httpSrv *http.Server) {
 }
 
 func main() {
-	glog.V(2).Info("....." + os.Getenv("version") + ".....")
-	flag.Set("v", "5")
-	flag.Parse()
+	glog.V(4).Info("....." + os.Getenv("version") + ".....")
+	flag.Set("v", "4")
+	glog.V(2).Info("Starting http server...")
+	//flag.Parse()
 	metrics.Register()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/hello", rootHandler)
