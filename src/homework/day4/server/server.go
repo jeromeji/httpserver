@@ -1,10 +1,10 @@
 package main
 
 import (
+	"cloudnative/src/homework/day4/server/metrics"
 	"context"
 	"flag"
 	"fmt"
-	"github.com/cncamp/golang/httpserver/metrics"
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"io"
@@ -61,11 +61,11 @@ func headers(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func notfound(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/" {
-		http.Redirect(w, r, "/headers", http.StatusFound)
-	}
-}
+//func notfound(w http.ResponseWriter, r *http.Request) {
+//	if r.URL.Path == "/" {
+//		http.Redirect(w, r, "/headers", http.StatusFound)
+//	}
+//}
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	glog.V(4).Info("entering root handler")
@@ -101,14 +101,17 @@ func listenSignal(ctx context.Context, httpSrv *http.Server) {
 
 func main() {
 	glog.V(2).Info("....." + os.Getenv("version") + ".....")
+	flag.Set("v", "5")
 	flag.Parse()
 	metrics.Register()
-	http.HandleFunc("/", notfound)
-	http.HandleFunc("/root", rootHandler)
-	http.HandleFunc("/healthz", healthz)
-	http.HandleFunc("/headers", headers)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/hello", rootHandler)
+	mux.HandleFunc("/healthz", healthz)
+	mux.HandleFunc("/headers", headers)
+	mux.Handle("/metrics", promhttp.Handler())
 	server := &http.Server{
-		Addr: ":8080",
+		Addr:    ":80",
+		Handler: mux,
 	}
 	go server.ListenAndServe()
 	listenSignal(context.Background(), server)
