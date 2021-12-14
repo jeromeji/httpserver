@@ -1,3 +1,4 @@
+## for ingress->svc->deployment->pod and configmap secret ssl
 ### generated key-cert
 ```
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=cncamp.com/O=cncamp" -addext "subjectAltName = DNS:cncamp.com"
@@ -22,4 +23,75 @@ kubectl describe ingress -A
 kubectl get svc -n ingress-nginx|grep ingress-nginx-controller
 
 curl  -H "Host: cncamp.com" https://192.169.0.202:30132 -v -k
+```
+
+##add loki stack
+### motify httpserver
+```
+motify server.go and add metrics module
+```
+###install helm
+```
+wget https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz
+tar zxvf helm-v3.5.3-linux-amd64.tar.gz
+mv linux-amd64/helm /usr/local/sbin/helm
+```
+### add grafana repo
+helm repo add grafana https://grafana.github.io/helm-charts
+### install loki-stack
+```
+helm upgrade --install loki grafana/loki-stack --set grafana.enabled=true,prometheus.enabled=true,prometheus.alertmanager.persistentVolume.enabled=false,prometheus.server.persistentVolume.enabled=false
+```
+
+### if you get the following error, that means your k8s version is too new to install
+```
+Error: unable to build kubernetes objects from release manifest: [unable to recognize "": no matches for kind "ClusterRole" in version "rbac.authorization.k8s.io/v1beta1", unable to recognize "": no matches for kind "ClusterRoleBinding" in version "rbac.authorization.k8s.io/v1beta1", unable to recognize "": no matches for kind "Role" in version "rbac.authorization.k8s.io/v1beta1", unable to recognize "": no matches for kind "RoleBinding" in version "rbac.authorization.k8s.io/v1beta1"]
+```
+
+### download loki-stack
+```
+helm pull grafana/loki-stack --untar --version 2.4.1
+```
+### replace all `rbac.authorization.k8s.io/v1beta1` with `rbac.authorization.k8s.io/v1` by 
+```
+sed -i s#rbac.authorization.k8s.io/v1beta1#rbac.authorization.k8s.io/v1#g *.yaml
+```
+### install loki locally
+```
+helm upgrade --install loki ./loki-stack --set grafana.enabled=true,prometheus.enabled=true,prometheus.alertmanager.persistentVolume.enabled=false,prometheus.server.persistentVolume.enabled=false
+```
+### change the services to NodePort type and access it
+### you can motify the port as you want
+### loki-prometheus-server's port must be 80,if not ,the grafana server can'nt connect to promethes server 
+```
+kubectl get svc -A
+kubectl edit svc loki-grafana 
+kubectl edit svc loki-prometheus-alertmanager
+kubectl edit svc loki-prometheus-server 
+kubectl get svc loki-grafana
+```
+###login user and password is in secret `loki-grafana`
+```
+kubectl get secret loki-grafana -o yaml
+echo  VW5vQ1Bub21FQlhSMnY0RG93cHk1YUU4dnZFNlo1TVZJTFpGQlAyQw== |base64 -d
+```
+###test your prometheus datasource
+
+###modfiy your httpserver deploymet.yaml like
+```
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
+kubectl apply deploymet.yaml
+```
+###login your prometheus server and check targets
+###you can find your ep
+
+###import your dashboard into grafana
+
+###curl your httpserver and watch your grafana dashboard
+```
+while true;do curl -H Host:cncamp.com https://192.168.0.202:30132/hello -v -k;sleep 5;done &
 ```

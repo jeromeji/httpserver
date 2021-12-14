@@ -12,9 +12,12 @@ spec:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 1
-  minReadySeconds: 5
+  minReadySeconds: 15
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
       labels:
         app: httpserver
     spec:
@@ -22,7 +25,7 @@ spec:
         - name: httpserver
           image:  jeromeji/httpserver:v1.1
           ports:
-            - containerPort: 8080
+            - containerPort: 80
           lifecycle:
             postStart:
               exec:
@@ -32,15 +35,15 @@ spec:
                 command: [ "/bin/sh","-c","ps aux|grep server|grep -v grep|awk -F ' ' '{print $2}'|xargs kill -12" ]
           livenessProbe:
             tcpSocket:
-              port: 8080
+              port: 80
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
             httpGet:
               scheme: HTTP
               path: /healthz
-              port: 8080
-            initialDelaySeconds: 3
+              port: 80
+            initialDelaySeconds: 15 
             periodSeconds: 5
           resources:
             requests:
