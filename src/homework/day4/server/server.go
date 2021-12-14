@@ -1,11 +1,11 @@
 package main
 
 import (
-	"cloudnative/src/homework/day4/server/metrics"
 	"context"
 	"flag"
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/jeromeji/httpserver/src/homework/day4/server/metrics"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"io"
 	"math/rand"

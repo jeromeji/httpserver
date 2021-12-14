@@ -1,4 +1,4 @@
-module cloudnative/src/homework/day4/server
+module github.com/jeromeji/httpserver/src/homework/day4/server
 
 go 1.17
 
