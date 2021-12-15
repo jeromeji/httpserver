@@ -95,3 +95,28 @@ kubectl apply deploymet.yaml
 ```
 while true;do curl -H Host:cncamp.com https://192.168.0.202:30132/hello -v -k;sleep 5;done &
 ```
+
+##ADD your AlTER 
+### edit prom configmap
+```
+k edit configmap loki-prometheus-server
+```
+### add the following alert to alerting_rules.yml
+```
+    groups:
+    - name: example
+      rules:
+      - alert: ContainerKilled
+        expr: time() - container_last_seen > 60
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container killed (instance {{ $labels.instance }})"
+          description: "A container has disappeared\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+```
+### reload prometheus server
+```
+curl -XPOST 192.168.166.149:9090/-/reload
+```
+
